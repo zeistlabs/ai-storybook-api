@@ -1,6 +1,7 @@
 const express = require("express");
 require("./src/dbconfig/config");
 const cors = require("cors");
+const path = require("path");
 
 const userRoutes = require("./src/routes/user_routes");
 const storyRoutes = require("./src/routes/generate_story_routes");
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use("/user", userRoutes);
 app.use("/story", storyRoutes);
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
