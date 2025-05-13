@@ -34,3 +34,6 @@ tmp
 
 #ignore images
 images
+
+#env ignorre
+.env
