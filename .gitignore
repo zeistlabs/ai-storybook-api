@@ -28,3 +28,12 @@ package-lock.json
 
 #ignore node_modules
 node_modules
+
+#ignore temp folder
+tmp
+
+#ignore images
+images
+
+#env ignorre
+.env
