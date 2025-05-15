@@ -26,6 +26,9 @@ const GEMINI_API_KEYS = [
     "AIzaSyDb6ofnM9Z6YIx-7Bg1iiVPCQsnKjZDfmw",
     "AIzaSyAfXQA2hFsg2QJA80PWFXRDYo_tvt_odn8",
     "AIzaSyB51tA6CXpE4ue1IbKKaninE2WezxjHPPQ",
+    "AIzaSyBSOfMJYOi6Y_LFPPz1LTWpfORbrgMVwPo",
+    "AIzaSyAN5iLJ8mVqCbSjMd6704cE4AvzsKfnI-o",
+    "AIzaSyAfXQA2hFsg2QJA80PWFXRDYo_tvt_odn8"
 ];
 
 let apiKeyIndex = 0;
@@ -68,17 +71,22 @@ router.post("/story-generator", async (req, res) => {
         const story = response.text();
 
         const storyLines = story.split('%').map(line => line.trim()).filter(Boolean);
-        const storyChunks = [];
-
-        for (let i = 0; i < storyLines.length; i += 3) {
-            storyChunks.push(storyLines.slice(i, i + 3).join(" "));
-        }
+        const storyChunks = [...storyLines];
 
         const imageMimeType = primaryCharacterImage.split(';')[0].split(':')[1];
         const imageBase64 = primaryCharacterImage.split(',')[1];
 
-
         const prim = { mime_type: imageMimeType, data: imageBase64 };
+
+        const coverImage = JSON.stringify({
+            contents: {
+                parts: [
+                    { text: `Generate a Cover Image for the this story  "${storyChunks[0]}", "${storyChunks[4]}, "${storyChunks[8]}", "${storyChunks[12]}", "${storyChunks[16]}", "${storyChunks[20]}, "${storyChunks[24]}", "${storyChunks[28]}", "${storyChunks[32]}", "${storyChunks[36]}". keeping in view that first image is the primary character and image must be in square dimensions` },
+                    { inline_data: prim }
+                ]
+            },
+            generationConfig: { responseModalities: ["Text", "Image"] }
+        })
 
         const promptx = storyChunks.map(line => JSON.stringify({
             contents: {
@@ -90,7 +98,11 @@ router.post("/story-generator", async (req, res) => {
             generationConfig: { responseModalities: ["Text", "Image"] }
         }));
 
-        // Step 3: Generate images from prompts and character image
+        // Step 3: Generate Cover Imagee from prompts and character image
+
+        const generatedCoverImage = await generateImagesFromPrompts(JSON.parse(coverImage), getNextApiKey(), 'cvr');
+
+        // Step 4: Generate images from prompts and character image
 
         const storyImages = await Promise.all(
             promptx?.map(async (promt, index) => {
@@ -101,7 +113,7 @@ router.post("/story-generator", async (req, res) => {
 
         res.status(200).json({
             story: storyChunks,
-            // coverImage: promptx,
+            coverImage: generatedCoverImage,
             storyImages: storyImages,
             status: "Success"
         });
@@ -148,17 +160,26 @@ const generateImagesFromPrompts = async (prompts, apiKey, index) => {
 
 const getPromptForModel = (data) => {
     return `
-Story generation
-Generate a story of 36 sentences, each separated by % and the details about the story are given as follows:
-Child Name is ${data?.child} and Child age is ${data?.age} years.
-Physical characteristics of child include ${data?.physicalCharacteristics} and child has a special role of ${data?.specialRole}.
-The main theme of the story is ${data?.mainTheme} and the location to focus is ${data?.location}.
-The objective of the story is ${data?.objectives}.
-The secondary character of the story is ${data?.secondaryCharacters}.
-The antagonist is ${data?.antagonist}.
-The tone of the story should be ${data?.tone} and the ending must be ${data?.ending}.
-Other details about the story are ${data?.otherInfo}.
-`;
+  Story Generation Prompt
+  
+  Please create a fun, imaginative, and age-appropriate children's story consisting of **36 sentences**, separated by the '%' character.
+  
+  Here are the key details to base the story on:
+  
+  - **Child's Name:** ${data?.child}
+  - **Child's Age:** ${data?.age} years old
+  - **Physical Characteristics:** ${data?.physicalCharacteristics}
+  - **Special Role or Identity:** ${data?.specialRole}
+  - **Main Theme or Adventure:** ${data?.mainTheme}
+  - **Primary Setting or Location:** ${data?.location}
+  - **Story Objective or Purpose:** ${data?.objectives}
+  - **Secondary Character(s):** ${data?.secondaryCharacters}
+  - **Antagonist or Conflict Source:** ${data?.antagonist}
+  - **Desired Tone or Mood:** ${data?.tone}
+  - **Ending Style:** ${data?.ending}
+  - **Other Notes or Details:** ${data?.otherInfo}
+  
+  Make sure the story is easy to understand for children under 15, full of imagination and wonder, and includes positive messages or lessons. Keep the language simple, engaging, and adventurous.`;
 };
 
 router.post("/generate-pdf", async (req, res) => {
@@ -215,7 +236,7 @@ router.post("/generate-pdf", async (req, res) => {
         });
 
         const pdfId = uuidv4();
-        const pdfPath = path.join(__dirname, "..", "tmp", pdfId);
+        const pdfPath = path.join(__dirname, "..", "tmp", `${pdfId}.pdf`);
 
         // Save to disk
         await fs.ensureDir(path.dirname(pdfPath));
