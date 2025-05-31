@@ -165,6 +165,8 @@ const generateImagesFromPrompts = async (prompts, apiKey, index) => {
 
 		const base64Img = response?.candidates[0]?.content?.parts[0]?.inlineData?.data;
 
+		console.log({ base64Img: base64Img.length });
+
 		// Convert base64 string to a buffer
 		const buffer = Buffer.from(base64Img, 'base64');
 		// Define the filename for the image
