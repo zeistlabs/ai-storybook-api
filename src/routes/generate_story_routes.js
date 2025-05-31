@@ -157,7 +157,7 @@ const generateImagesFromPrompts = async (prompts, apiKey, index) => {
 
 		const response = await ai.models.generateContent({
 			model: 'gemini-2.0-flash-preview-image-generation',
-			contents: contents,
+			contents: prompts,
 			config: {
 				responseModalities: [Modality.IMAGE]
 			}
