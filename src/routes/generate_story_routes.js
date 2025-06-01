@@ -143,27 +143,27 @@ router.post('/story-generator', async (req, res) => {
 
 const generateImagesFromPrompts = async (prompts, apiKey, index) => {
 	try {
-		// const response = await axios.post(
-		// 	`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
-		// 	prompts,
-		// 	{
-		// 		headers: {
-		// 			'Content-Type': 'application/json'
-		// 		}
-		// 	}
-		// );
-
-		const ai = new GoogleGenAI({ apiKey });
-
-		const response = await ai.models.generateContent({
-			model: 'gemini-2.0-flash-preview-image-generation',
-			contents: prompts,
-			config: {
-				responseModalities: [Modality.IMAGE]
+		const response = await axios.post(
+			`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+			prompts,
+			{
+				headers: {
+					'Content-Type': 'application/json'
+				}
 			}
-		});
+		);
 
-		const base64Img = response?.candidates[0]?.content?.parts[0]?.inlineData?.data;
+		// const ai = new GoogleGenAI({ apiKey });
+
+		// const response = await ai.models.generateContent({
+		// 	model: 'gemini-2.0-flash-preview-image-generation',
+		// 	contents: prompts,
+		// 	config: {
+		// 		responseModalities: [Modality.IMAGE]
+		// 	}
+		// });
+
+		const base64Img = response?.data?.candidates[0]?.content?.parts[1]?.inlineData?.data;
 
 		console.log({ base64Img: base64Img.length });
 
