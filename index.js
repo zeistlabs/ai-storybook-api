@@ -8,7 +8,7 @@ const storyRoutes = require('./src/routes/generate_story_routes');
 const emailRoutes = require('./src/routes/email_routes');
 
 const app = express();
-const PORT = 5005;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cors());
