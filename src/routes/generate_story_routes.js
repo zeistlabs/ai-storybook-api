@@ -325,18 +325,18 @@ const uploadToLulu = async (fileBuffer) => {
 		if (!accessToken) throw new Error('No access token received from Lulu');
 
 		// Step 2: Prepare form-data with file
-		// const form = new FormData();
-		// form.append('file', fileBuffer, fileName);
+		const form = new FormData();
+		form.append('file', fileBuffer, fileName);
 
-		// // Step 3: Upload PDF to Lulu
-		// const uploadRes = await axios.post('https://api.lulu.com/print/v1/files/', form, {
-		//     headers: {
-		//         ...form.getHeaders(),
-		//         Authorization: `Bearer ${accessToken}`,
-		//     }
-		// });
+		// Step 3: Upload PDF to Lulu
+		const uploadRes = await axios.post('https://api.lulu.com/print/v1/files/', form, {
+			headers: {
+				...form.getHeaders(),
+				Authorization: `Bearer ${accessToken}`
+			}
+		});
 
-		// return uploadRes.data.file_id;
+		return uploadRes.data.file_id;
 	} catch (err) {
 		console.error('Error uploading to Lulu:', err.response?.data || err.message);
 		throw err;
