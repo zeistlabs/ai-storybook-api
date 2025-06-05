@@ -288,6 +288,7 @@ router.post('/generate-pdf', async (req, res) => {
 
 router.post('/send-to-lulu', async (req, res) => {
 	const { pdfId } = req.body;
+	console.log('lulu', { pdfId });
 
 	if (pdfId) {
 		const pdf = await StoryPDF.findOne({ pdfId });
