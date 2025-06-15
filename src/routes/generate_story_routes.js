@@ -14,7 +14,7 @@ const axios = require('axios');
 const StoryPDF = require('../db/stories/stories');
 
 const IMAGE_OUTPUT_DIR = 'images';
-const BASE_IMAGE_URL = process.env.BASE_URL;
+const BASE_URL = process.env.BASE_URL;
 
 // ✅ Replace with your own Gemini API keys
 const GEMINI_API_KEYS = [
@@ -178,7 +178,7 @@ const generateImagesFromPrompts = async (prompts, apiKey, index) => {
 		// Write the buffer to a file
 		fs.writeFileSync(filepath, buffer);
 		// Return the URL for the image
-		return `${BASE_IMAGE_URL}/images/${filename}`;
+		return `${BASE_URL}/images/${filename}`;
 	} catch (err) {
 		console.error('Error generating image for prompt:', err.response?.data || err.message);
 	}
@@ -298,8 +298,7 @@ router.post('/send-to-lulu', async (req, res) => {
 		if (!pdf) return res.status(404).json({ error: 'PDF not found' });
 
 		// Build full public URL to the file
-		const serverBaseUrl = process.env.SERVER_BASE_URL || 'http://localhost:5005'; // set this in .env for prod
-		const publicUrl = `${serverBaseUrl}/public-pdfs/${pdf.filePath.split('uploads/')[1]}`;
+		const publicUrl = `${BASE_URL}/public-pdfs/${pdf.filePath.split('uploads/')[1]}`;
 
 		const luluResponse = await submitLuluPrintJob(luluToken, publicUrl, userData);
 		res.json({ success: true, luluResponse });
@@ -352,7 +351,7 @@ const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 		const response = await axios.post(
 			'https://api.lulu.com/print-jobs/',
 			{
-				contact_email: userDetails?.contact_email,
+				contact_email: process.env.EMAIL_USER,
 				external_id: userDetails?.external_id,
 				line_items: [
 					{
@@ -364,7 +363,7 @@ const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 							interior: {
 								source_url: publicUrl
 							},
-							pod_package_id: '0600X0900BWSTDPB060UW444MXX' // POD ID for 6x9 b&w paperback
+							pod_package_id: '0600X0900FCSTDPB060UW444MXX'
 						},
 						quantity: 30,
 						title: 'My Book'
@@ -380,7 +379,7 @@ const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 					state_code: userDetails?.postcode ?? '',
 					street1: userDetails?.street1
 				},
-				shipping_level: 'MAIL' // or "MAIL" "PRIORITY_MAIL" "GROUND_HD" "GROUND_BUS" "GROUND" "EXPEDITED" "EXPRESS".
+				shipping_level: 'MAIL'
 			},
 			{
 				headers: {
