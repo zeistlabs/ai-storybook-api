@@ -287,60 +287,123 @@ router.post('/generate-pdf', async (req, res) => {
 });
 
 router.post('/send-to-lulu', async (req, res) => {
-	const { pdfId } = req.body;
-	console.log('lulu', { pdfId });
+	const { pdfId, userData } = req.body;
 
-	if (pdfId) {
+	try {
+		const luluToken = await getLuluAccessToken();
+
+		if (!pdfId) return res.status(400).send('PDF ID is required');
+
 		const pdf = await StoryPDF.findOne({ pdfId });
 		if (!pdf) return res.status(404).json({ error: 'PDF not found' });
 
-		const fileBuffer = fs.readFileSync(pdf.filePath);
+		// Build full public URL to the file
+		const serverBaseUrl = process.env.SERVER_BASE_URL || 'http://localhost:5005'; // set this in .env for prod
+		const publicUrl = `${serverBaseUrl}/public-pdfs/${pdf.filePath.split('uploads/')[1]}`;
 
-		const luluResponse = await uploadToLulu(fileBuffer);
+		const luluResponse = await submitLuluPrintJob(luluToken, publicUrl, userData);
 		res.json({ success: true, luluResponse });
-	} else {
-		res.status(500).send('Story ID is required');
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: 'Failed to send to Lulu' });
 	}
 });
 
-const uploadToLulu = async (fileBuffer) => {
+const getLuluAccessToken = async () => {
+	const client_id = process.env.LULU_CLIENT_ID;
+	const client_secret = process.env.LULU_CLIENT_SECRET;
+
+	const auth = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
+
 	try {
-		// Step 1: Get access token
-		const tokenRes = await axios.post(
-			'https://api.lulu.com/oauth/token',
-			{
-				grant_type: 'client_credentials',
-				client_id: 'be6bd390-397b-4e67-b437-491e668b6bf0',
-				client_secret: '0afDZcLG3QESRpSFWBu35Z977y95yIfL'
-			},
+		console.log('Requesting Lulu access token using correct endpoint...');
+
+		const response = await axios.post(
+			'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
+			new URLSearchParams({
+				grant_type: 'client_credentials'
+			}),
 			{
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/x-www-form-urlencoded',
+					Authorization: `Basic ${auth}`
 				}
 			}
 		);
 
-		const accessToken = tokenRes.data.access_token;
+		console.log('Access token received.', response.data.access_token);
+		return response.data.access_token;
+	} catch (error) {
+		console.error('Failed to get Lulu access token.');
 
-		console.log('accessToken ->', accessToken);
-		if (!accessToken) throw new Error('No access token received from Lulu');
+		if (error.response) {
+			console.error('Status:', error.response.status);
+			console.error('Data:', error.response.data);
+		} else {
+			console.error('Error:', error.message);
+		}
 
-		// Step 2: Prepare form-data with file
-		const form = new FormData();
-		form.append('file', fileBuffer, fileName);
+		throw new Error('Lulu token request failed');
+	}
+};
 
-		// Step 3: Upload PDF to Lulu
-		const uploadRes = await axios.post('https://api.lulu.com/print/v1/files/', form, {
-			headers: {
-				...form.getHeaders(),
-				Authorization: `Bearer ${accessToken}`
+const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
+	try {
+		const response = await axios.post(
+			'https://api.lulu.com/print-jobs/',
+			{
+				contact_email: userDetails?.contact_email,
+				external_id: userDetails?.external_id,
+				line_items: [
+					{
+						external_id: userDetails?.external_id,
+						printable_normalization: {
+							cover: {
+								source_url: generatedCoverImage
+							},
+							interior: {
+								source_url: publicUrl
+							},
+							pod_package_id: '0600X0900BWSTDPB060UW444MXX' // POD ID for 6x9 b&w paperback
+						},
+						quantity: 30,
+						title: 'My Book'
+					}
+				],
+				production_delay: 120,
+				shipping_address: {
+					city: userDetails?.city,
+					country_code: userDetails?.country_code,
+					name: userDetails?.name,
+					phone_number: userDetails?.phone_number,
+					postcode: userDetails?.postcode,
+					state_code: userDetails?.postcode ?? '',
+					street1: userDetails?.street1
+				},
+				shipping_level: 'MAIL' // or "MAIL" "PRIORITY_MAIL" "GROUND_HD" "GROUND_BUS" "GROUND" "EXPEDITED" "EXPRESS".
+			},
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-cache'
+				}
 			}
-		});
+		);
 
-		return uploadRes.data.file_id;
-	} catch (err) {
-		console.error('Error uploading to Lulu:', err.response?.data || err.message);
-		throw err;
+		console.log('✅ Print job submitted:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('❌ Failed to submit print job.');
+
+		if (error.response) {
+			console.error('Status:', error.response.status);
+			console.error('Data:', error.response.data);
+		} else {
+			console.error('Error:', error.message);
+		}
+
+		throw new Error('Print job submission failed');
 	}
 };
 
