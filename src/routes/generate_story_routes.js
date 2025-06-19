@@ -41,6 +41,8 @@ const getNextApiKey = () => {
 };
 
 let primaryCharacterImage = '';
+let generatedCoverImage = '';
+let storyTitle = '';
 
 router.post('/primary-image', upload.single('image'), async (req, res) => {
 	try {
@@ -86,7 +88,7 @@ router.post('/story-generator', async (req, res) => {
 			contents: {
 				parts: [
 					{
-						text: `Generate a Cover Image for the this story  "${storyChunks[0]}", "${storyChunks[4]}, "${storyChunks[8]}", "${storyChunks[12]}", "${storyChunks[16]}", "${storyChunks[20]}, "${storyChunks[24]}", "${storyChunks[28]}", "${storyChunks[32]}", "${storyChunks[36]}". keeping in view that first image is the primary character and image must be in square dimensions`
+						text: `Generate a Cover Image for the this story  "${storyChunks[0]}", "${storyChunks[4]}, "${storyChunks[8]}", "${storyChunks[12]}", "${storyChunks[16]}", "${storyChunks[20]}, "${storyChunks[24]}", "${storyChunks[28]}", "${storyChunks[32]}", "${storyChunks[36]}". keeping in view that first image is the primary character and image must be in square dimensions. Also give a story title based on the cover image.`
 					},
 					{ inline_data: prim }
 				]
@@ -99,7 +101,7 @@ router.post('/story-generator', async (req, res) => {
 				contents: {
 					parts: [
 						{
-							text: `Generate Image for the this line of story  "${line}" keeping in view that first image is the primary character and image must be in square dimensions`
+							text: `Generate Image for the this line of story "${line}" keeping in view that first image is the primary character and image must be in square dimensions`
 						},
 						{ inline_data: prim }
 					]
@@ -110,7 +112,7 @@ router.post('/story-generator', async (req, res) => {
 
 		// Step 3: Generate Cover Imagee from prompts and character image
 
-		const generatedCoverImage = await generateImagesFromPrompts(
+		generatedCoverImage = await generateImagesFromPrompts(
 			JSON.parse(coverImage),
 			getNextApiKey(),
 			'cvr'
@@ -128,6 +130,11 @@ router.post('/story-generator', async (req, res) => {
 				return image;
 			})
 		);
+
+		let TitlePrompt = `Generate a Story Title for this story  "${storyChunks[0]}", "${storyChunks[4]}, "${storyChunks[8]}", "${storyChunks[12]}", "${storyChunks[16]}", "${storyChunks[20]}, "${storyChunks[24]}", "${storyChunks[28]}", "${storyChunks[32]}", "${storyChunks[36]}".`;
+		const titlePrompt = await model.generateContent(TitlePrompt);
+		const res = await titlePrompt.response;
+		storyTitle = res.text();
 
 		res.status(200).json({
 			story: storyChunks,
@@ -365,8 +372,8 @@ const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 							},
 							pod_package_id: '0600X0900FCSTDPB060UW444MXX'
 						},
-						quantity: 30,
-						title: 'My Book'
+						quantity: 1,
+						title: storyTitle
 					}
 				],
 				production_delay: 120,
