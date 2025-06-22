@@ -331,7 +331,7 @@ const getLuluAccessToken = async () => {
 		params.set('grant_type', 'client_credentials');
 
 		const response = await axios.post(
-			'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
+			'https://api.sandbox.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
 			params,
 			{
 				headers: {
@@ -360,7 +360,7 @@ const getLuluAccessToken = async () => {
 const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 	try {
 		const response = await axios.post(
-			'https://api.lulu.com/print-jobs/',
+			'https://api.sandbox.lulu.com/print-jobs/',
 			{
 				contact_email: process.env.EMAIL_USER,
 				external_id: userDetails?.external_id,
