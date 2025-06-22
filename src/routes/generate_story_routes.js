@@ -326,9 +326,7 @@ const getLuluAccessToken = async () => {
 
 		const response = await axios.post(
 			'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
-			new URLSearchParams({
-				grant_type: 'client_credentials'
-			}),
+			new URLSearchParams({ grant_type: 'client_credentials' }),
 			{
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
