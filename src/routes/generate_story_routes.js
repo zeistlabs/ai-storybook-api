@@ -144,7 +144,7 @@ router.post('/story-generator', async (req, res) => {
 		});
 	} catch (error) {
 		console.error('Error generating story and images:', error);
-		res.status(500).send('Error generating story and images');
+		res.status(500).send(`Error generating story and images: ${error?.message}`);
 	}
 });
 
