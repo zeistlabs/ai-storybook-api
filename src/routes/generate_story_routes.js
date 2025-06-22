@@ -134,8 +134,8 @@ router.post('/story-generator', async (req, res) => {
 
 		let TitlePrompt = `Generate a Story Title for this story  "${storyChunks[0]}", "${storyChunks[4]}, "${storyChunks[8]}", "${storyChunks[12]}", "${storyChunks[16]}", "${storyChunks[20]}, "${storyChunks[24]}", "${storyChunks[28]}", "${storyChunks[32]}", "${storyChunks[36]}".`;
 		const titlePrompt = await model.generateContent(TitlePrompt);
-		const res = await titlePrompt.response;
-		storyTitle = res.text();
+		const respone = await titlePrompt.response;
+		storyTitle = respone.text();
 
 		res.status(200).json({
 			story: storyChunks,
