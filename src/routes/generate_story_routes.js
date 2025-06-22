@@ -319,6 +319,8 @@ const getLuluAccessToken = async () => {
 	const client_id = process.env.LULU_CLIENT_ID;
 	const client_secret = process.env.LULU_CLIENT_SECRET;
 
+	console.log({ client_id, client_secret });
+
 	const auth = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
 
 	try {
