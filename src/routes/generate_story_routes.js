@@ -51,6 +51,7 @@ router.post('/primary-image', upload.single('image'), async (req, res) => {
 		}
 		const base64Image = req.file.buffer.toString('base64');
 		const mimeType = req.file.mimetype;
+		console.log({ mimeType });
 		primaryCharacterImage = `data:${mimeType};base64,${base64Image}`;
 
 		res.status(200).json({
