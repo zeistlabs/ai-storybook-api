@@ -312,7 +312,7 @@ router.post('/send-to-lulu', async (req, res) => {
 		res.json({ success: true, luluResponse });
 	} catch (err) {
 		console.error(err);
-		res.status(500).json({ error: 'Failed to send to Lulu' });
+		res.status(500).json({ error: `Failed to send to Lulu: ${err?.message}` });
 	}
 });
 
@@ -327,9 +327,12 @@ const getLuluAccessToken = async () => {
 	try {
 		console.log('Requesting Lulu access token using correct endpoint...');
 
+		const params = new URLSearchParams();
+		params.set('grant_type', 'client_credentials');
+
 		const response = await axios.post(
 			'https://api.lulu.com/auth/realms/glasstree/protocol/openid-connect/token',
-			new URLSearchParams({ grant_type: 'client_credentials' }),
+			params,
 			{
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
