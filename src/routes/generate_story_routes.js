@@ -404,7 +404,8 @@ const submitLuluPrintJob = async (accessToken, publicUrl, userDetails) => {
 		console.log('✅ Print job submitted:', response.data);
 		return response.data;
 	} catch (error) {
-		console.error('❌ Failed to submit print job.');
+		console.log('❌ Failed to submit print job.');
+		console.log(error);
 
 		if (error.response) {
 			console.error('Status:', error.response.status);
